@@ -1,10 +1,11 @@
 var express = require('express');
 var app = express();
+var morgan = require('morgan');
 app.use(morgan('combined'));
 
 var http = require('http').Server(app);
 
-var morgan = require('morgan');
+
 var path = require('path');
 var Pool = require('pg').Pool;
 
@@ -34,246 +35,13 @@ app.get('/test-db', function (req, res) {
         {
           res.status(500).send(err.toString()) ;
         }
-        elsevar express = require('express');
-var morgan = require('morgan');
-var path = require('path');
-var Pool = require('pg').Pool;
-var crypto = require('crypto');
-var bodyParser = require('body-parser');
-var session = require('express-session');
-
-var config = {
-    user: 'abhilashkasap',
-    database: 'abhilashkasap',
-    host: 'db.imad.hasura-app.io',
-    port: '5432',
-    password: process.env.DB_PASSWORD
-};
-
-var app = express();
-app.use(morgan('combined'));
-app.use(bodyParser.json());
-app.use(session({
-    secret: 'someRandomSecretValue',
-    cookie: { maxAge: 1000 * 60 * 60 * 24 * 30}
-}));
-
-function createTemplate (data) {
-    var title = data.title;
-    var date = data.date;
-    var heading = data.heading;
-    var content = data.content;
-    
-    var htmlTemplate = `<!DOCTYPE html>
-                         <head>
-          <title>
-        ${title} </title>
-    <link rel="stylesheet" type="text/css" href="/ui/blogstyle.css">
-    <link href="https://fonts.googleapis.com/css?family=Gloria+Hallelujah" rel="stylesheet">
-</head>
-
-<body>
-    <div id="header">
-        <span id="home"><a class="anchor" href="/">Home</a></span>
-        <span id="myblog">Vikshipt's Blog</span>
-        <div id="userinfo">
-        </div>
-    </div>
-    <div id="articlelist">
-    </div>
-    <div id="content">
-        ${content}
-        <div id="comment_form">
-    </div>
-    <div id="comments">
-    </div>
-    </div>
-    
-
-<script type="text/javascript" src="/ui/article.js"></script>
-</body>
-
-</html> `;
-    return htmlTemplate;
-}
-
-app.get('/', function (req, res) {
-  res.sendFile(path.join(__dirname, 'ui', 'index.html'));
-});
-
-function hash (input, salt) {
-    // How do we create a hash?
-    var hashed = crypto.pbkdf2Sync(input, salt, 10000, 512, 'sha512');
-    return ["pbkdf2", "10000", salt, hashed.toString('hex')].join('$');
-}
-
-
-app.get('/hash/:input', function(req, res) {
-   var hashedString = hash(req.params.input, 'this-is-some-random-string');
-   res.send(hashedString);
-});
-
-app.post('/create-user', function (req, res) {
-   // username, password
-   // {"username": "tanmai", "password": "password"}
-   // JSON
-   var username = req.body.username;
-   var password = req.body.password;
-   var salt = crypto.randomBytes(128).toString('hex');
-   var dbString = hash(password, salt);
-   pool.query('INSERT INTO "user" (username, password) VALUES ($1, $2)', [username, dbString], function (err, result) {
-      if (err) {
-          res.status(500).send(err.toString());
-      } else {
-          res.send('User successfully created: ' + username);
-      }
-   });
-});
-
-app.post('/login', function (req, res) {
-   var username = req.body.username;
-   var password = req.body.password;
-   
-   pool.query('SELECT * FROM "user" WHERE username = $1', [username], function (err, result) {
-      if (err) {
-          res.status(500).send(err.toString());
-      } else {
-          if (result.rows.length === 0) {
-              res.status(403).send('username/password is invalid');
-          } else {
-              // Match the password
-              var dbString = result.rows[0].password;
-              var salt = dbString.split('$')[2];
-              var hashedPassword = hash(password, salt); // Creating a hash based on the password submitted and the original salt
-              if (hashedPassword === dbString) {
-                
-                // Set the session
-                req.session.auth = {userId: result.rows[0].id};
-                // set cookie with a session id
-                // internally, on the server side, it maps the session id to an object
-                // { auth: {userId }}
-                
-                res.send('credentials correct!');
-                
-              } else {
-                res.status(403).send('username/password is invalid');
-              }
-          }
-      }
-   });
-});
-
-app.get('/check-login', function (req, res) {
-   if (req.session && req.session.auth && req.session.auth.userId) {
-       // Load the user object
-       pool.query('SELECT * FROM "user" WHERE id = $1', [req.session.auth.userId], function (err, result) {
-           if (err) {
-              res.status(500).send(err.toString());
-           } else {
-              res.send(result.rows[0].username);    
-           }
-       });
-   } else {
-       res.status(400).send('You are not logged in');
-   }
-});
-
-app.get('/logout', function (req, res) {
-   delete req.session.auth;
-   res.send('<html><body>Logged out!<br/><br/><a href="/">Back to home</a></body></html>');
-});
-
-var pool = new Pool(config);
-
-app.get('/get-articles', function (req, res) {
-   // make a select request
-   // return a response with the results
-   pool.query('SELECT * FROM article ORDER BY date DESC', function (err, result) {
-      if (err) {
-          res.status(500).send(err.toString());
-      } else {
-          res.send(JSON.stringify(result.rows));
-      }
-   });
-});
-
-app.get('/get-comments/:articleName', function (req, res) {
-   // make a select request
-   // return a response with the results
-   pool.query('SELECT comment.*, "user".username FROM article, comment, "user" WHERE article.title = $1 AND article.id = comment.article_id AND comment.user_id = "user".id ORDER BY comment.timestamp DESC', [req.params.articleName], function (err, result) {
-      if (err) {
-          res.status(500).send(err.toString());
-      } else {
-          res.send(JSON.stringify(result.rows));
-      }
-   });
-});
-
-app.post('/submit-comment/:articleName', function (req, res) {
-   // Check if the user is logged in
-    if (req.session && req.session.auth && req.session.auth.userId) {
-        // First check if the article exists and get the article-id
-        pool.query('SELECT * from article where title = $1', [req.params.articleName], function (err, result) {
-            if (err) {
-                res.status(500).send(err.toString());
-            } else {
-                if (result.rows.length === 0) {
-                    res.status(400).send('Article not found');
-                } else {
-                    var articleId = result.rows[0].id;
-                    // Now insert the right comment for this article
-                    pool.query(
-                        "INSERT INTO comment (comment, article_id, user_id) VALUES ($1, $2, $3)",
-                        [req.body.comment, articleId, req.session.auth.userId],
-                        function (err, result) {
-                            if (err) {
-                                res.status(500).send(err.toString());
-                            } else {
-                                res.status(200).send('Comment inserted!');
-                            }
-                        });
-                }
-            }
-       });     
-    } else {
-        res.status(403).send('Only logged in users can comment');
-    }
-});
-
-app.get('/articles/:articleName', function (req, res) {
-  // SELECT * FROM article WHERE title = '\'; DELETE WHERE a = \'asdf'
-  pool.query("SELECT * FROM article WHERE title = $1", [req.params.articleName], function (err, result) {
-    if (err) {
-        res.status(500).send(err.toString());
-    } else {
-        if (result.rows.length === 0) {
-            res.status(404).send('Article not found');
-        } else {
-            var articleData = result.rows[0];
-            res.send(createTemplate(articleData));
-        }
-    }
-  });
-});
-
-
-app.get('/ui/:fileName', function (req, res) {
-  res.sendFile(path.join(__dirname, 'ui', req.params.fileName));
-});
-
-
-var port = 8080; // Use 8080 for local development because you might already have apache running on 80
-app.listen(8080, function () {
-  console.log(`IMAD course app listening on port ${port}!`);
-});
-
+        else
         {
           res.send(JSON.stringify(result.rows));  
         }
     });
  
 });
-
 
 
 
@@ -400,7 +168,7 @@ res.send(JSON.stringify(names));
 
 //articles
 
-app.get('/articles/:articleName', function (req, res) {
+app.get('/articles/:articleName/:page', function (req, res) {
 // var articleName=req.params.articleName;
 //pool.query("Select * from articles,users where title='" + req.params.articleName + "'", function(err,result){
 pool.query("select article_tags.tag,articles.title,articles.content,articles.category,articles.heading, articles,date,users.name from articles,article_tags,users where article_tags.article_id=articles.id AND articles.title='"+ req.params.articleName +"' AND articles.author_id=users.id;",function(err,result){
@@ -417,15 +185,25 @@ pool.query("select article_tags.tag,articles.title,articles.content,articles.cat
                 res.status(400).send('ARTICLE NOT FOUND');
              }
                  else{
-                   
+                
                   var  articleData=result.rows[0];
                   res.send(createTemplate(articleData));
                      
                  }
              }
+    
 });
+});
+ 
 
- });
+
+
+ 
+ 
+ 
+
+ 
+ 
 
 
 //TEMPLATE CODE
@@ -449,7 +227,6 @@ var template= `
   <link rel="stylesheet" href="ui/style.css">
  
   		<style>
-
   		#leftCol{
   		    
   		    z-index:1;
@@ -462,12 +239,15 @@ var template= `
   .s {
      width:100px; 
   }
-
  .affix + .container-fluid {
       padding-top: 70px;
   }
   .bold{
       font-weight:bolder;
+  }
+body {
+background:	#E6E6FA;
+      
   }
 </style>
 </head>
@@ -481,14 +261,14 @@ var template= `
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
         </button>
-       <a href="#" class="active navbar-brand bold">Inayat's Blog</a>
+       <a href="/" class="active navbar-brand bold">Inayat's Blog</a>
        
     </div>
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
         <ul class="nav navbar-nav">
-            <li class=" bold"><a href="#">Home</a></li>
-            <li><a href="#" class="bold">Login</a></li>
-           <li><a href="#" class="bold">Register</a></li>
+            <li class="bold active"><a href="/">Blog</a></li>
+            <li><a href="#" class="bold" data-toggle="modal" data-target="#loginModal">Login</a></li>
+           <li><a href="#" class="bold" data-toggle="modal" data-target="#registerModal">Register</a></li>
            </ul>
            <div class="col-sm-3 col-md-3 pull-right">
             <form class="navbar-form" role="search">
@@ -529,10 +309,9 @@ var template= `
       <h1>${heading.toUpperCase()}</h1>
        <h4><span class="label label-info">${category}</span></h4>
       <h5><span class="glyphicon glyphicon-time"></span> Post by <b>${author}</b>, ${date.toDateString()}.</h5>
-      <h5><span class="label label-success">${tag[1]}</span></h5><br>
+      <h5><span class="label label-success">${tag}</span></h5><br>
       <p>${content}</p>
       <hr>
-
       <h4>Leave a Comment:</h4>
       
       <form role="form">
@@ -577,20 +356,95 @@ var template= `
     </div>
   </div>
 </div>
-
-<footer class="container-fluid">
-  <p>Footer Text</p>
+<ul class="pager">
+  <li><a href="#">Previous</a></li>
+  <li><a href="#">Next</a></li>
+</ul>
+<footer class="container-fluid navbar navbar-default navbar-bottom">
+<b>Copyright&copyINAYAT HUSSAIN</b>
 </footer>
+  <!-- LoginModal -->
+  <div class="modal fade" id="loginModal" role="dialog">
+    <div class="modal-dialog">
+    
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">Login</h4>
+        </div>
+        <div class="modal-body">
+         <form>
+  <div class="form-group">
+    <label for="email">Email address:</label>
+    <input type="email" class="form-control" id="email">
+  </div>
+  <div class="form-group">
+    <label for="pwd">Password:</label>
+    <input type="password" class="form-control" id="pwd">
+  </div>
+  <div class="checkbox">
+    <label><input type="checkbox"> Remember me</label>
+  </div>
+  <button type="submit" class="btn btn-default">Submit</button>
+</form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+  
+     <!-- Register Modal -->
+  <div class="modal fade" id="registerModal" role="dialog">
+    <div class="modal-dialog">
+    
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">Register</h4>
+        </div>
+        <div class="modal-body">
+       <form>
+  <div class="form-group">
+    <label for="email">Email address:</label>
+    <input type="email" class="form-control" id="email">
+  </div>
+  <div class="form-group">
+    <label for="pwd">Password:</label>
+    <input type="password" class="form-control" id="pwd">
+  </div>
+  <div class="checkbox">
+    <label><input type="checkbox"> Remember me</label>
+  </div>
+  <button type="submit" class="btn btn-default">Submit</button>
+</form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+  
+</div>
+  
  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 <script type="text/javascript" src="/ui/main.js"></script>
 </body>
 </html>
-
 `;
 
 return template;
 }
+
+
+
 
 
 
