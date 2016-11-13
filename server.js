@@ -418,7 +418,7 @@ return template;
 }
 
 //test code//
-/*function hash (input, salt) {
+function hash (input, salt) {
     // How do we create a hash?
     var hashed = crypto.pbkdf2Sync(input, salt, 10000, 512, 'sha512');
     return ["pbkdf2", "10000", salt, hashed.toString('hex')].join('$');
@@ -512,7 +512,7 @@ app.get('/get-articles', function (req, res) {
           res.send(JSON.stringify(result.rows));
       }
    });
-});*/
+});
 //test code end//
 var port = 8080; // Use 8080 for local development because you might already have apache running on 80
 app.listen(8080, function () {
