@@ -2,7 +2,7 @@ var express = require('express');
 var app = express();
 var morgan = require('morgan');
 app.use(morgan('combined'));
-
+var crypto = require('crypto');
 var http = require('http').Server(app);
 
 
