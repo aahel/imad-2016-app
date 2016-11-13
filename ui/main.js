@@ -184,7 +184,7 @@ request.send(null);
 
 };
 // trial code //
-function changediv(user_name)
+/*function changediv(user_name)
 {
     
     var divhtml="<h2>Hi,"+ user_name+"</h2> <br><h1><a href='/logout'>Logout</a></h1><br><br><br><br><br><br><br><br>";
@@ -291,3 +291,4 @@ loadLogin();
 
 // Now this is something that we could have directly done on the server-side using templating too!
 loadLoginForm();
+*/
