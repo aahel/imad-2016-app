@@ -1,7 +1,7 @@
 
 function userSignUp() {
 
-    alert("hi");
+  
     //var register = document.getElementById('register_btn');
     //console.log(register);
     //register.onclick = function () {
